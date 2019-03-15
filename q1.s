@@ -1,3 +1,7 @@
+#
+# 	WORK IN PROGRESS
+#		TODO: There are register related requirements in docs, code needs modification.
+#
 # QUESTION 1
 #   Function
 #       According to given parameters, prints elements and sum of an arithmetic series
@@ -10,8 +14,7 @@
 #
 #       s = (a_1 * l) + (((l-1) * l)/2) * t
 #
-#   TODO: There are register related requirements in docs, code needs modification.
-#
+
             .data
 init_str:   .asciiz "Enter the first number in the series: "
 len_str:    .asciiz "Enter the number of integers in the series: "

@@ -1,3 +1,9 @@
+#	WORK IN PROGRESS
+#		TODO: multiplication command is wrong, switch to
+#				mult $rt, $rs
+#				mflo $rd
+#		TODO: prim's alg. and debug
+#
 #   QUESTION 2
 #       Applies prim's algorithm to a graph thats defined with its arcs as string.
 #           Example arc: "node1_id node2_id arc_weight"
@@ -15,7 +21,7 @@
 #
 #       Node
 #           10b for id
-#           4b for arc_arr length
+#           4b for arc_arr_length
 #           392b for arcs(49 arcs max per node)
 #       Arc
 #           4b for address it points to
@@ -216,7 +222,7 @@ prim:
         # visit = flag array, once a node visited its flag will be set
         # we will search for the smallest weighted arc over ALL visited nodes
 
-        # let's assume we magically generated a random number between 0 to s0 and stored at $a0, mips might not support it at all(syscall 30, 41, 42 unknown error)
+        # let's just assume we magically generated a random number between 0 to s0 and stored at $a0, mips might not support it at all(syscall 30, 41, 42 unknown error)
 
         addi $s0, $s0, -1               # s0 was pointing end of the array, by subtracting 1, we make equation on the right valid (&last_node = sp + 406*s0)
         la $s5, search                  # we no longer need address of comp, s5 = &search
