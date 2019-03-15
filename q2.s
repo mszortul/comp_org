@@ -33,7 +33,7 @@ buf:    .space 20000                    # buffer that will store the input strin
 
 comp:   .space 10                       # buffer for string comparison
 visit:  .byte 0:64                      # which nodes are visited, 0 initialized
-search: .word -1:64                     # search for small weight in this array of indexes, -1 initialized
+search: .byte -1:64                     # search for small weight in this array of indexes, -1 initialized
 
         .text
         .globl main
@@ -218,13 +218,15 @@ save2:                                  # add arcs
 
 
 prim:
+        # At this point all the node and arc data are in the stack (from sp to sp + s0*406)
         # s0 = length of node_arr
         # visit = flag array, once a node visited its flag will be set
         # we will search for the smallest weighted arc over ALL visited nodes
 
-        # let's just assume we magically generated a random number between 0 to s0 and stored at $a0, mips might not support it at all(syscall 30, 41, 42 unknown error)
+        # for a moment, let's just assume we magically generated a random number between 0 to s0 and stored at $a0
+        # this version of mips/spim might not support it at all(syscall 30, 41, 42 raises unknown error)
 
-        addi $s0, $s0, -1               # s0 was pointing end of the array, by subtracting 1, we make equation on the right valid (&last_node = sp + 406*s0)
+        addi $s0, $s0, -1               # s0 was indirectly pointing to the end(just outside) of the array, by subtracting 1, we make the equation on the right valid (&last_node = sp + 406*s0)
         la $s5, search                  # we no longer need address of comp, s5 = &search
 
         add $t0, $a0, $zero             # q is a random number, t0 = q
@@ -236,31 +238,30 @@ prim:
 
         add $s2, $zero, $zero           # j = 0
         add $s3, $zero, $zero           # k = 0
-        addi $t3, $zero, 60             # t3 = 60, parse till j hits 60
+        addi $t3, $zero, 60             # t3 = 60, parse visit array to find visited nodes till j hits 60
 
 parse_visit:
         add $t0, $s7, $s2               # t0 = &visit[j]
         lb $t0, 0($t0)                  # t0 = visit[j]
-        addi $t1, $zero, 1              # t1 = 1
 
-        beq $s2, $t3, begin_search      # if (j == 60) begin searching for the smallest weight
-        beq $t0, $t1, add_to_search     # if (visit[j] == 1) we add it's index(j) to search array
-
-continue_parse:
+        beq $s2, $t3, done              # if (j == 60) begin searching for the smallest weight
+        beq $t0, $t1, search_next       # if (visit[j] == 1) we add it's index(j) to search array
         addi $s2, $s2, 1                # j++
         j parse_visit
 
 
-add_to_search:
+search_next:
+
+        # we should only search for arcs that points from visited nodes to unvisited nodes
+
+        add $t2, $s5, $s3               # t2 = &search[k]
+        sb $s2, 0($t2)                  # j value stored in search array
 
 
-        #
-        #
-        #   GOTTA LOOK AT THAT WHOLE PRIM THING!!
-        #
-        #
 
+begin_search:
 
+        #
 
 
 
