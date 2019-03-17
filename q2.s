@@ -62,7 +62,7 @@ main:
         sw $ra, 48($sp)                 # register values from former procedure is pushed onto stack, must reverted at the end of execution
 
 
-        addi $sp, $sp, 20300            # total memory reserved for node array, (49*8+10+4) * 50
+        addi $sp, $sp, -20300            # total memory reserved for node array, (49*8+10+4) * 50
         sw $zero, -4($sp)               # total weight is stored here
 
         add $s0, $zero, $zero           # l = 0, s0 is where we keep the current length of node array
