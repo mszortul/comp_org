@@ -1,16 +1,7 @@
 #
 #	WORK IN PROGRESS
 #		TODO:
-#               multiplication and division commands are wrong, switch to something like
-#				       mult $rt, $rs
-#				       mflo $rd
-#		        prim's alg. is almost done but there are a few issues
-#                      random node selection problem(try rand_test.s on qtspim windows, maybe it supports one of the 30, 41 or 42 syscalls)
-#                      how are we gonna choose the initial mininum at the start of each iteration
-#                      there is no exit condition right now, how can we know that algorithm is complete (should be terminated when there is no arc that points from visited to unvisited node)
-#               need to print total weight, value is already on the stack just need to print it
-#               saved registers in stack should be reverted before exit syscall
-#               also, issues will appear in testing(don't forget to analyse whole execution before run tests)
+#               random node selection problem(try rand_test.s on qtspim windows, maybe it supports one of the 30, 41 or 42 syscalls)
 #
 #   QUESTION 2
 #       Applies prim's algorithm to a graph thats defined with its arcs as string.
@@ -41,6 +32,10 @@ buf:    .space 20000                    # buffer that will store the input strin
 comp:   .space 10                       # buffer for string comparison
 visit:  .byte 0:64                      # which nodes are visited, 0 initialized
 search: .word -1:64                     # search for small weight in this array of indexes, -1 initialized
+
+str1:   .asciiz "Enter the graph: "
+str2:   .asciiz "\nMinimum Spanning Tree:\n"
+str3:   .asciiz "Total weight is "
 nextl:  .asciiz "\n"
 
         .text
@@ -61,8 +56,11 @@ main:
         sw $a3, 44($sp)
         sw $ra, 48($sp)                 # register values from former procedure is pushed onto stack, must reverted at the end of execution
 
+        li $v0, 4
+        la $a0, str1                    # print first string
+        syscall                         # execute print_string
 
-        addi $sp, $sp, -20300            # total memory reserved for node array, (49*8+10+4) * 50
+        addi $sp, $sp, -20300           # total memory reserved for node array, (49*8+10+4) * 50
         sw $zero, -4($sp)               # total weight is stored here
 
         add $s0, $zero, $zero           # l = 0, s0 is where we keep the current length of node array
@@ -77,6 +75,10 @@ main:
         li $a1, 20000                   # max string length to be read is 20000
         la $a0, buf                     # save read input into buf
         syscall                         # execute read_string
+
+        li $v0, 4
+        la $a0, str2                    # print second string
+        syscall                         # execute print_string
 
         la $s4, buf                     # s4 = &buf
         la $s5, comp                    # s5 = &comp
@@ -106,7 +108,8 @@ proc_init:
 proc:                                   # processing cached piece of string before reading the next one
         beq $s3, $s0, add_new_node      # are we at the end of node array, if we are, exit loop(proc) and add new node
         addi $t1, $zero, 406            # space used by an element of node array, n = 406
-        mul $t1, $t1, $s3               # distance between current node and sp, t1 = k*n
+        mult $t1, $s3
+        mflo $t1                        # distance between current node and sp, t1 = k*n
         add $t1, $sp, $t1               # address of current node, t1 = sp + k*n, t1 = &node_arr[k]
 
         add $t2, $t1, $s2               # t2 = address of j'th byte from &node_arr[k]
@@ -140,15 +143,18 @@ str2int_loop:
         addi $s2, $s2, -1               # j--
         add $t2, $s5, $s2               # t2 = &comp[j]
         lb $t2, 0($t2)                  # t2 = comp[j]
-        mul $t2, $t2, $t1               # t2 = comp[j] * multiplier
+        mult $t2, $t1
+        mflo $t2                        # t2 = comp[j] * multiplier
         add $t0, $t0, $t2               # t0 = t0 + t2
-        mul $t1, $t1, $t4               # multiplier = multiplier * 10
+        mult $t1, $t4
+        mflo $t1                        # multiplier = multiplier * 10
         j str2int_loop
 
 add_new_node:
                                         # j is 0 right now!
         addi $t0, $zero, 406            # n = 406
-        mul $t0, $t0, $s0               # t0 = n*l
+        mult $t0, $s0
+        mflo $t0                        # t0 = n*l
         add $t0, $t0, $sp               # t0 = sp + n*l, end of the node_arr, this is where we add the next node
         addi $s0, $s0, 1                # l++, add 1 to length of node_arr
         addi $t3, $zero, 10             # constant 10 needed for exit control of loop(write_new_id)
@@ -167,7 +173,8 @@ id_match:
         # ids are matched save node address to $t0
 
         addi $t0, $zero, 406            # t0 = 406
-        mul $t0, $t0, $s3               # t0 = k*406
+        mult $t0, $s3
+        mflo $t0                        # t0 = k*406
         add $t0, $t0, $sp               # t0 = k*406 + sp
 
 
@@ -179,7 +186,7 @@ save:
         addi $t2, $zero, 1              # t2 = 1
         beq $s6, $t2, save1             # if (mode == 1), save node_arr index as second node, store  in $t9
         addi $t2, $t2, 1                # t2 = 2
-        beq $s6, $t2, save2             # if (mode == 2), add arc to nodes, arc weight stored in $t7
+        beq $s6, $t2, save2             # if (mode == 2), add arc to nodes, arc weight stored in $t8
 
 
 save0:                                  # save first node address
@@ -202,7 +209,8 @@ save2:                                  # add arcs
         addi $t4, $zero, 4              # t4 = 4, space of arc_arr_length
         add $t1, $t1, $t8               # address of arc_arr_length of first node
         lw $t2, 0($t1)                  # load arc_arr_length
-        mul $t5, $t3, $t2               # t5 = 8*arc_arr_length
+        mult $t3, $t2
+        mflo $t5                        # t5 = 8*arc_arr_length
         add $t6, $t5, $t1               # t6 = 8*arc_arr_length + 10
         add $t6, $t6, $t4               # t6 = 8*arc_arr_length + 10 + 4, this is where we add new arc data (&second_node, weight)
         sw $t9, 0($t6)                  # &second_node saved
@@ -214,7 +222,8 @@ save2:                                  # add arcs
 
         add $t1, $t1, $t9               # address of arc_arr_length of second node
         lw $t2, 0($t1)                  # load arc_arr_length
-        mul $t5, $t3, $t2               # t5 = 8*arc_arr_length
+        mult $t3, $t2
+        mflo $t5                        # t5 = 8*arc_arr_length
         add $t6, $t5, $t1               # t6 = 8*arc_arr_length + 10
         add $t6, $t6, $t4               # t6 = 8*arc_arr_length + 10 + 4, this is where we add new arc data (&first_node, weight)
         sw $t8, 0($t6)                  # &second_node saved
@@ -236,6 +245,10 @@ prim:
         # for a moment, let's just assume we magically generated a random number between 0 and s0 and stored it at $a0
         # this version of mips/spim might not support it at all(syscall 30, 41, 42 raises unknown error)
 
+        # use primes for random number generation
+
+        addi $a0, $zero, 1
+
         addi $s0, $s0, -1               # s0 was indirectly pointing to the end(just outside) of the array, by subtracting 1, we make the equation on the right valid (&last_node = sp + 406*s0)
         la $s5, search                  # we no longer need address of comp, s5 = &search
 
@@ -252,6 +265,7 @@ next_step:                              # we need to reset counters between iter
         add $s3, $zero, $zero           # k = 0
         addi $t1, $zero, 1              # t1 = 1
         addi $t3, $zero, 60             # t3 = 60, parse visit array to find visited nodes till j hits 60
+        addi $t7, $zero, -1             # t7 = -1
 
 parse_visit:
         add $t0, $s7, $s2               # t0 = &visit[j]
@@ -270,7 +284,6 @@ add_to_search:
         j parse_visit
 
 begin_search:
-
         # actual searching part
         # we should only search for arcs that points from "visited nodes to unvisited nodes"
         # t0-9, s0-4, s6 is free now
@@ -283,18 +296,18 @@ begin_search:
         j skip_inc_k
 
 next_node:
-
         addi $s3, $s3, 1                # k++
 
 skip_inc_k:
         add $t0, $s5, $s3               # t0 = &search[k]
         lw $t0, 0($t0)                  # t0 = search[k]
 
-        slt $t1, $t0, $zero                 # if (search[k] < 0) we parsed all nodes in search array
-        bnq $t1, $zero, search_reset_init   # jump to reset search array and proceed to next iteration of prim
+        slt $t1, $t0, $zero             # if (search[k] < 0) we parsed all nodes in search array
+        bne $t1, $zero, search_res_init # jump to reset search array and proceed to next iteration of prim
 
         addi $t1, $zero, 406            # t1 = 406
-        mul $t1, $t1, $t0               # t1 = 406*search[k]
+        mult $t1, $s0
+        mflo $t1                        # t1 = 406*search[k]
         add $t1, $t1, $sp               # t1 = sp + 406*search[k]
         addi $t1, $t1, 10               # t1 = sp + 406*search[k] + 10
         lw $t2, 0($t1)                  # t2 = arc_arr_length of node search[k]
@@ -315,27 +328,34 @@ skip_inc_l:
         add $t3, $t1, $s0               # t3 = &arc_arr[l]
         lw $t4, 0($t3)                  # t4 = arc_arr[l][0], where the arc points to
         sub $t5, $t4, $sp               # t5 = t4 - sp, space between sp and pointed node
-        divi $t5, $t5, 406              # t5 = index of pointed node
+        addi $t6, $zero, 406            # t6 = 406
+        div $t5, $t6
+        mflo $t5                        # t5 = index of pointed node
 
         # index found, check if visited
 
         add $t6, $s7, $t5               # t6 = &visit[l]
         lb $t6, 0($t6)                  # t6 = visit[l]
-        bnq $t6, $zero, next_arc        # if (visit[l] != 0), if branch taken, means that pointed node already visited, therefore it's not valid, check next_arc
+        bne $t6, $zero, next_arc        # if (visit[l] != 0), if branch taken, means that pointed node already visited, therefore it's not valid, check next_arc
         lw $t4, 4($t3)                  # else, t4 = arc_weight, pointed node is valid
-        slt $t8, $t4, min_w             # t8 = t4 < min_w ? 1 : 0
+
+        slt $t8, $t7, $zero             # t8 = t7 < 0 ? 1 : 0, if t7 is negative its the first arc we found
+        beq $t8, $zero, no_init         # skip initialize min
+        add $t7, $t4, $zero             # t7 = t4, min_w = arc_weight
+
+no_init:
+        slt $t8, $t4, $t7               # t8 = t4 < min_w ? 1 : 0
         beq $t8, $zero, next_arc        # if (arc_weight >= min), check next_arc
-        add min, $zero, $t4             # else, min = t4
+        add $t7, $zero, $t4             # else, min_w = t4
 
         # data for output saved to stack, this data will be overwritten in case arc with smaller weight is found, will be converted to ascii at the end of iteration
-        # "node1_id node2_id arc_weight\n"
 
         sw $t0, -8($sp)                 # store index of first node, already visited
         sw $t5, -12($sp)                # store index of second node, will be visited next
-        sw $t4, -16($sp)                # store weight of chosen arc
+        sw $t7, -16($sp)                # store weight of chosen arc
         j next_arc
 
-search_reset_init:
+search_res_init:
         add $s2, $zero, $zero           # j = 0
 
         # now we must set visit[l] to 1, save arc info to buffer and add weight to total weight
@@ -353,9 +373,12 @@ search_reset_init:
 
         la $s0, buf                     # s0 = &buf
 
-        multi $t0, $t0, 406             # t0 = node1_index * 406
+        addi $s3, $zero, 406            # k = 406
+        mult $t0, $s3
+        mflo $t0                        # t0 = node1_index * 406
         add $t0, $t0, $sp               # t0 = &node1_id, sp + node1_index * 406
-        multi $t5, $t5, 406             # t5 = node2_index * 406
+        mult $t5, $s3
+        mflo $t5                        # t5 = node2_index * 406
         add $t5, $t5, $sp               # t5 = &node2_id, sp + node2_index * 406
 
 node_copy1:
@@ -415,52 +438,42 @@ search_reset:
         add $t6, $s5, $s3               # t6 = &search[k]
         sw $t4, 0($t6)                  # search[k] = -1
         addi $s3, $s3, 1                # k++
-        bnq $s3, $t5, search_reset      # if (k != 60) continue
+        bne $s3, $t5, search_reset      # if (k != 60) continue
+        slt $t8, $t7, $zero             # t8 = t7 < 0 ? 1 : 0
+        bne $t8, $zero, exit            # if t7 still negative after an iteration, there is no arc left to follow
         j next_step
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 exit:
+        li $v0, 4
+        la $a0, str3                    # print last string
+        syscall                         # execute print_string
+
+        li $v0, 1
+        lw $a0, -4($sp)                 # address of total_weight
+        syscall                         # execute print_int
+
+        li $v0, 4
+        la $a0, nextl                   # print nextline
+        syscall
+
+        # return registers and stack space
+
+        addi $sp, $sp, 20300            # space that hold graph data
+
+        lw $s0, 0($sp)
+        lw $s1, 4($sp)
+        lw $s2, 8($sp)
+        lw $s3, 12($sp)
+        lw $s4, 16($sp)
+        lw $s5, 20($sp)
+        lw $s6, 24($sp)
+        lw $s7, 28($sp)
+        lw $a0, 32($sp)
+        lw $a1, 36($sp)
+        lw $a2, 40($sp)
+        lw $a3, 44($sp)
+        lw $ra, 48($sp)                 # register values from former procedure back in register
+        addi $sp, $sp, 52               # stack space returned
+
+        li $v0, 10
+        syscall                         # end procedure
