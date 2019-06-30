@@ -1,0 +1,32 @@
+00000000		// register 0
+000000aa		// rs (add)
+00000011		// rt (add)
+00000000		// rd (add)	0xbb after execution
+00000055		// rs (sub)
+00000022		// rt (sub)
+00000000		// rd (sub)	0x33 after execution
+000000ff		// rs (and)
+00000088		// rt (and)
+00000000		// rd (and)	0x88 after execution
+000000a0		// rs (or)
+0000000b		// rt (or)
+00000000		// rd (or)	0xab after execution
+00000001		// rs (slt)
+00000010		// rt (slt)
+00000000		// rd (slt) 0x1 after execution
+0000aa00		// rt (srl)
+00000000		// rd (srl)	0xaa0 after execution (shamt value is 4)
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000
+00000000

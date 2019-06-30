@@ -19,7 +19,7 @@ main:
 loop:
         beq $t0, $t4, exit
         li $a1, 10              # upper bound is 10
-        li $v0, 30              # load random_int
+        li $v0, 42              # load random_int
         syscall                 # random int generated and saved to a0
 
         li $v0, 1

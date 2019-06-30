@@ -1,0 +1,32 @@
+00
+00
+00
+00
+00
+00
+00
+00
+de	// will be written onto R[22]
+ad
+be
+ef
+00	// 12 after execution
+00	// 34 after execution
+00	// ff after execution
+00	// ff after execution
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00
+00

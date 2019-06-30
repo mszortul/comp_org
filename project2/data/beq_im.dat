@@ -1,0 +1,24 @@
+00	// add	1,2,0	dummy instruction
+22
+00
+20
+00	// add	1,2,3
+22
+18
+20
+00	// sub	4,5,6
+85
+30
+22
+13	// beq	25,26		imm=1 (PC+4+(1<<2))
+3a
+00
+01
+00	// and	7,8,9		this instruction will be skipped
+e8
+48
+24
+01	// or	10,11,12	execution will continue from here
+4b
+60
+25
